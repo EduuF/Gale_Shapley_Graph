@@ -4,7 +4,7 @@
 #include <iostream>
 #include <list>
 #include <queue>
-using namespace std;
+#include <fstream>
 
 using namespace std;
 
@@ -45,6 +45,18 @@ public:
 };
 
 int main(int argc, char *argv[]){
+
+    ifstream in(argv[1]);
+
+    string texto;
+    char c = in.get();
+    texto.push_back(c);
+    while(in.good()){
+        cout << c;
+        c = in.get();
+        texto.push_back(c);
+    }
+
 
     /*
      * V = Visitantes
