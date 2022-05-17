@@ -6,6 +6,8 @@
 #include <queue>
 using namespace std;
 
+using namespace std;
+
 class Grafo{
 public:
     int numero_de_vertices;
@@ -93,6 +95,40 @@ int main(int argc, char *argv[]){
         }
     }
 
+    // Arrumando a preferencia dos usuarios
+    //int preferencias_usuarios[V][V];
+
+    for(int i = 0; i < V; i++){
+
+        for(int m = 1; m <= V; m++){
+            int indice, achou_m = false;
+
+            for(int j = 0; j < V; j++){
+
+                if(preferencias_usuarios[i][j] == m){
+                    if(!achou_m){
+                        indice = j;
+                        achou_m = true;
+                    } else {
+                        // Joga todos p cima
+                        for(int k = 0; k < V; k++){
+                            if(k!= indice && preferencias_usuarios[i][k] >= m)
+                                preferencias_usuarios[i][k]++;
+                        }
+                    }
+                }
+            }
+
+            if(!achou_m){
+                for(int k = 0; k < V; k++){
+                    if(preferencias_usuarios[i][k] > m)
+                        preferencias_usuarios[i][k]--;
+                }
+            }
+        }
+    }
+
+
     /*
      * Monta o grafo a partir do mapa
      */
@@ -156,7 +192,7 @@ int main(int argc, char *argv[]){
                     /*               */
 
     // Encontra o menor caminho entre as bikes e os usuário (Lista de preferencias das Bikes)
-    int preferencias_bikes[V][V];
+    int distancia_bikes[V][V];
 
     // Para cada uma das bikes 'i'
     for(int i = 0; i < V; i++){
@@ -179,7 +215,7 @@ int main(int argc, char *argv[]){
             // Checa se o primeiro elemento da fila equivale a algum usuario 'j'
             for(int j = 0; j < V; j++){
                 if(fila.front().vertice == posicao_usuarios[j]){
-                    preferencias_bikes[i][j] = fila.front().altura;
+                    distancia_bikes[i][j] = fila.front().altura;
                     // Continua procurando o caminho para os outros usuários
                     break;
                 }
@@ -197,9 +233,175 @@ int main(int argc, char *argv[]){
         }
     }
 
+    // Calcula o ranking das Bikes (Usuário mais perto)
+    int ranking_bikes[V][V];
+    for(int i=0; i < V; i++){ // Para cada bike
 
-    // preferencias_bikes
+        for(int j = 0; j < V; j++){
+            int menor = N*M+1, id_menor;
+
+            for(int k = 0; k < V; k++){ // Acha o menor na atual lista de distancia
+
+                if(distancia_bikes[i][k] < menor){
+                    menor = distancia_bikes[i][k];
+                    id_menor = k;
+                }
+
+            }
+
+            ranking_bikes[i][j] = id_menor;
+            distancia_bikes[i][id_menor] = ((N*M)+1);
+
+        }
+
+    }
+
+    // Calcula o ranking dos usuarios
+    int ranking_usuarios[V][V];
+    for(int i=0; i < V; i++) { // Para cada usuario
+        for(int j=0; j < V; j++){
+            ranking_usuarios[i][preferencias_usuarios[i][j]-1] = j;
+        }
+    }
+
+
+
+
+    // distancia_bikes
     // preferencias_usuarios  <<< METE GALESHAPLEY
+    cout << "Ranking das bikes" << endl;
+    for(int i=0; i < V; i++){
+        for(int j = 0; j < V; j++){
+            cout << ranking_bikes[i][j];
+        }
+        cout << endl;
+    }
+    cout << endl;
+    cout << "Ranking dos usuarios" << endl;
+    for(int i=0; i < V; i++){
+        for(int j = 0; j < V; j++){
+            cout << ranking_usuarios[i][j];
+        }
+        cout << endl;
+    }
+
+    cout << endl;
+
+
+    // GALE-SHAPLEY
+
+    /*
+     *  0 = nunca propôs
+     * -1 = propôs e recusou
+     *  1 = propôs e aceitou
+    */
+
+    int proposicoes[V][V];
+    bool usuario_sem_bike = true;
+    int u = 0; // usuario sem bike
+
+    // SETANDO AS ALOCACOES COMO 0
+    for(int i = 0; i < V; i++){
+        for(int j = 0; j < V; j++) {
+            proposicoes[i][j] = 0;
+        }
+    }
+
+    // ALG GALE-SHAPLEY //
+
+    while(usuario_sem_bike){
+        usuario_sem_bike = false;
+        cout << "Usuario: " << u << endl;
+
+        // ENCONTRA A BIKE (NUNCA PROPOSTA) PREFERIDA DO USUARIO
+        int melhor_bike;
+        for(int i = 0; i < V; i++){
+            if(proposicoes[u][ranking_usuarios[u][i]] == 0) {
+                melhor_bike = ranking_usuarios[u][i];
+                break;
+            }
+        }
+        cout << "Melhor bike nunca proposta: " << melhor_bike << endl;
+
+        // VERIFICA SE A BIKE JA FOI ALOCADA A ALGUEM
+        bool bike_unmatched = true;
+        int atual_match_da_bike;
+        for(int j = 0; j< V; j++){
+            if(proposicoes[j][melhor_bike] == 1){
+                bike_unmatched = false;
+                atual_match_da_bike = j;
+            }
+
+        }
+
+        if(!bike_unmatched)
+            cout << "Atual Match da bike: " << atual_match_da_bike << endl;
+        else
+            cout << "Bike Nunca foi alocada" << endl;
+
+        //VERIFICA PREFERENCIA DA BIKE
+        bool prefere_antigo = false;
+        if(!bike_unmatched){
+            for(int i = 0; i < V; i++){
+                // Se o antigo vier primerio
+                if(ranking_bikes[melhor_bike][i] == atual_match_da_bike){
+                    prefere_antigo = true;
+                    break;
+                }
+                // Se o novo vier primeiro
+                if(ranking_bikes[melhor_bike][i] == u){
+                    break;
+                }
+            }
+        }
+
+        if(bike_unmatched){
+            proposicoes[u][melhor_bike] = 1;
+        } else if(!prefere_antigo){
+            proposicoes[u][melhor_bike] = 1;
+            proposicoes[atual_match_da_bike][melhor_bike] = -1;
+        } else {
+            proposicoes[u][melhor_bike] = -1;
+        }
+
+        cout << "Porposicoes de " << u << ": ";
+        for(int i = 0; i < V; i++)
+            cout << proposicoes[u][i] << " ";
+        cout << endl;
+
+
+        // VERIFICA SE AINDA EXISTE USUARIO SEM BIKE
+        for(int i = 0; i < V; i++){
+            bool foi_aceito = false;
+
+            for(int j = 0; j < V; j++){
+                if(proposicoes[i][j] == 1) {
+                    foi_aceito = true;
+                    break;
+                }
+            }
+
+            if(!foi_aceito){
+                usuario_sem_bike = true;
+                u = i;
+                break;
+            }
+        }
+    }
+
+    for(int i=0; i < V; i++){
+        cout << char(i+97) << " ";
+        for(int j = 0; j < V; j++){
+            if(proposicoes[i][j] == 1)
+                cout << j;
+        }
+        cout << endl;
+    }
+
+    cout << endl;
+
+
+
     return 0;
 
 }
