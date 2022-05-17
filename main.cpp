@@ -95,39 +95,22 @@ int main(int argc, char *argv[]){
         }
     }
 
-    // Arrumando a preferencia dos usuarios
-    //int preferencias_usuarios[V][V];
-
+    int ranking_usuarios[V][V];
     for(int i = 0; i < V; i++){
 
-        for(int m = 1; m <= V; m++){
-            int indice, achou_m = false;
+        for(int j = 0; j < V; j++){
+            int maior = 0, indice;
 
-            for(int j = 0; j < V; j++){
-
-                if(preferencias_usuarios[i][j] == m){
-                    if(!achou_m){
-                        indice = j;
-                        achou_m = true;
-                    } else {
-                        // Joga todos p cima
-                        for(int k = 0; k < V; k++){
-                            if(k!= indice && preferencias_usuarios[i][k] >= m)
-                                preferencias_usuarios[i][k]++;
-                        }
-                    }
+            for(int k = 0; k < V; k++){
+                if(preferencias_usuarios[i][k] > maior){
+                    maior = preferencias_usuarios[i][k];
+                    indice = k;
                 }
             }
-
-            if(!achou_m){
-                for(int k = 0; k < V; k++){
-                    if(preferencias_usuarios[i][k] > m)
-                        preferencias_usuarios[i][k]--;
-                }
-            }
+            ranking_usuarios[i][j] = indice;
+            preferencias_usuarios[i][indice] = -1;
         }
     }
-
 
     /*
      * Monta o grafo a partir do mapa
@@ -164,7 +147,6 @@ int main(int argc, char *argv[]){
     }
 
     // Pega a posicao de cada bicicleta
-
     int posicao_bikes[V];
 
     for(int i = 0; i < N; i++) {
@@ -176,7 +158,6 @@ int main(int argc, char *argv[]){
     }
 
     // Pega a posicao de cada usuario
-
     int posicao_usuarios[V];
 
     for(int i = 0; i < N; i++) {
@@ -246,46 +227,11 @@ int main(int argc, char *argv[]){
                     menor = distancia_bikes[i][k];
                     id_menor = k;
                 }
-
             }
-
             ranking_bikes[i][j] = id_menor;
             distancia_bikes[i][id_menor] = ((N*M)+1);
-
-        }
-
-    }
-
-    // Calcula o ranking dos usuarios
-    int ranking_usuarios[V][V];
-    for(int i=0; i < V; i++) { // Para cada usuario
-        for(int j=0; j < V; j++){
-            ranking_usuarios[i][preferencias_usuarios[i][j]-1] = j;
         }
     }
-
-
-
-
-    // distancia_bikes
-    // preferencias_usuarios  <<< METE GALESHAPLEY
-    cout << "Ranking das bikes" << endl;
-    for(int i=0; i < V; i++){
-        for(int j = 0; j < V; j++){
-            cout << ranking_bikes[i][j];
-        }
-        cout << endl;
-    }
-    cout << endl;
-    cout << "Ranking dos usuarios" << endl;
-    for(int i=0; i < V; i++){
-        for(int j = 0; j < V; j++){
-            cout << ranking_usuarios[i][j];
-        }
-        cout << endl;
-    }
-
-    cout << endl;
 
 
     // GALE-SHAPLEY
@@ -311,7 +257,6 @@ int main(int argc, char *argv[]){
 
     while(usuario_sem_bike){
         usuario_sem_bike = false;
-        cout << "Usuario: " << u << endl;
 
         // ENCONTRA A BIKE (NUNCA PROPOSTA) PREFERIDA DO USUARIO
         int melhor_bike;
@@ -321,7 +266,6 @@ int main(int argc, char *argv[]){
                 break;
             }
         }
-        cout << "Melhor bike nunca proposta: " << melhor_bike << endl;
 
         // VERIFICA SE A BIKE JA FOI ALOCADA A ALGUEM
         bool bike_unmatched = true;
@@ -333,11 +277,6 @@ int main(int argc, char *argv[]){
             }
 
         }
-
-        if(!bike_unmatched)
-            cout << "Atual Match da bike: " << atual_match_da_bike << endl;
-        else
-            cout << "Bike Nunca foi alocada" << endl;
 
         //VERIFICA PREFERENCIA DA BIKE
         bool prefere_antigo = false;
@@ -363,12 +302,6 @@ int main(int argc, char *argv[]){
         } else {
             proposicoes[u][melhor_bike] = -1;
         }
-
-        cout << "Porposicoes de " << u << ": ";
-        for(int i = 0; i < V; i++)
-            cout << proposicoes[u][i] << " ";
-        cout << endl;
-
 
         // VERIFICA SE AINDA EXISTE USUARIO SEM BIKE
         for(int i = 0; i < V; i++){
